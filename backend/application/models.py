@@ -54,7 +54,7 @@ class ServiceRequest(db.Model):
     professional_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     date_of_request = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     date_of_completion = db.Column(db.DateTime)
-    service_status = db.Column(db.String(50), nullable=False, default='requested')  # e.g., requested, assigned, closed
+    service_status = db.Column(db.String(50), nullable=False, default='requested') 
     remarks = db.Column(db.String(255))
     status = db.Column(db.String(255))
 

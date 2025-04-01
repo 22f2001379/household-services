@@ -77,7 +77,8 @@
                         {{ details.experience }}
                       </td>
                       <td>{{ !details.approved ? 'Blocked' : 'Approved' }}</td>
-                      <td>{{ details.rating }}</td>
+                      <td v-if="details.rating">{{ details.rating }}</td>
+                      <td v-else>Not yet</td>
                       <td style="width: 100px;">
                         <button 
                           style="width: 80px;" 

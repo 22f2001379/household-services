@@ -4,9 +4,11 @@ from .database import db
 from .models import *
 from datetime import datetime
 from flask_cors import cross_origin
-# @app.route('/', methods=['GET'])
-# def home():
-#     return "This is my homepage."
+
+
+
+
+
 
 @app.route('/api/home')
 @auth_required('token')
@@ -296,17 +298,30 @@ def get_customers():
 def get_professionals():
     userList = User.query.filter_by(role_id=3).all()
 
+    professionals = []
+    for user in userList:
+        # Fetch the first service request associated with the professional
+        service_request = ServiceRequest.query.filter_by(professional_id=user.id).first()
+        
+        rating = None  # Default rating value
+        
+        if service_request:
+            # Fetch the first review for the found service request
+            review = Review.query.filter_by(service_request_id=service_request.service_id).first()
+            if review:
+                rating = review.rating  # Assign rating if review exists
 
-    return jsonify([{
-        'id': user.id,
-        'service': user.service,
-        'name': user.user_name,
-        'location': user.location,
-        'experience': user.experience,
-        'approved': user.approved,
-        'rating': Review.query.filter_by(service_request_id=ServiceRequest.query.filter_by(professional_id=user.id).first().service_id).first().rating,
-        # 'review': user.review
-    } for user in userList]), 200
+        professionals.append({
+            'id': user.id,
+            'service': user.service,
+            'name': user.user_name,
+            'location': user.location,
+            'experience': user.experience,
+            'approved': user.approved,
+            'rating': rating  # Use validated rating value
+        })
+
+    return jsonify(professionals), 200
 
 # @app.route('/api/get/services', methods=['GET'])
 # @cross_origin(supports_credentials=True)
@@ -576,24 +591,32 @@ def get_service_requests():
 @app.route('/api/get/professional-service-request/<int:id>', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_professional_service_requests(id):
-    serviceList = ServiceRequest.query.filter_by(professional_id=id)
-    # review = Review.query.filter_by(service_request_id=)
-    # user = User.query.filter_by(id=id).first()
+    serviceList = ServiceRequest.query.filter_by(professional_id=id).all()  # Ensure .all() to retrieve results
 
+    service_requests = []
+    for service in serviceList:
+        # Fetch review safely
+        review = Review.query.filter_by(service_request_id=service.service_id).first()
+        rating = review.rating if review else None  # Avoid AttributeError
+        
+        # Fetch service name safely
+        service_obj = Service.query.filter_by(id=service.service_id).first()
+        service_name = service_obj.name if service_obj else None  # Avoid AttributeError
+        
+        service_requests.append({
+            'id': service.id,
+            'service_id': service.service_id,
+            'customer_id': service.customer_id,
+            'professional_id': service.professional_id,
+            'date_of_request': service.date_of_request.isoformat(),
+            'date_of_completion': service.date_of_completion.isoformat() if service.date_of_completion else None,
+            'service_status': service.service_status,
+            'remarks': service.remarks,
+            'rating': rating,  
+            "service": service_name 
+        })
 
-    return jsonify([{
-        'id': service.id,
-        'service_id': service.service_id,
-        'customer_id': service.customer_id,
-        'professional_id': service.professional_id,
-        'date_of_request': service.date_of_request.isoformat(),
-        'date_of_completion': service.date_of_completion.isoformat() if service.date_of_completion else None,
-        'service_status': service.service_status,
-        'remarks': service.remarks,
-        'rating': Review.query.filter_by(service_request_id=service.service_id).first().rating,
-        "service": Service.query.filter_by(id=service.service_id).first().name
-        # 'name': 
-    } for service in serviceList]), 200
+    return jsonify(service_requests), 200
 
 
 @app.route('/api/update/professional-service-request/<int:request_id>', methods=['PUT'])
@@ -712,6 +735,8 @@ def add_review():
     db.session.commit()
     
     return jsonify({"message": "Review added successfully!", "review_id": new_review.id}), 201
+
+
 
 
 if __name__ == '__main__':

@@ -11,36 +11,13 @@ from flask_cors import CORS
 # Creating the Flask app instance
 app = Flask(__name__)
 
-# Update CORS to allow requests from Vue.js frontend (e.g., http://localhost:8080)
 # Specify origins for security
 CORS(app, supports_credentials=True, origins=["http://localhost:3000"])  # Allow only Vue.js frontend
 
 # Configuring the app
 app.config.from_object(LocalDevelopmentConfig) 
 
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your-email@gmail.com'
-app.config['MAIL_PASSWORD'] = 'your-app-password'
-app.name = 'household-services'
 
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
-mail = Mail(app)
-
-@celery.task
-def send_daily_reminders():
-    pending = ServiceRequest.query.filter_by(service_status='assigned').all()
-    for req in pending:
-        if req.professional_id:
-            pro = User.query.get(req.professional_id)
-            msg = Message("Pending Request Reminder", recipients=[pro.email])
-            msg.body = f"Request ID: {req.id} is assigned to you. Act on it!"
-            with app.app_context():
-                mail.send(msg)
 
 def create_app():
     app = Flask(__name__)

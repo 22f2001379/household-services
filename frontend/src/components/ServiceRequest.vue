@@ -70,7 +70,7 @@
           </div>
         </div>
         <div style="width: 100%; height: 100px; display: flex; justify-content: center;">
-          <textarea style="width: 100%; margin: 8px;" v-model="reviewText"></textarea>
+          <!-- <textarea style="width: 100%; margin: 8px;" v-model="reviewText"></textarea> -->
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="closeModal">Cancel</button>
@@ -98,6 +98,12 @@ export default {
       rating: 0,
       reviewText: ""
     };
+  },
+  computed: {
+     userLoggedDetails() {
+      console.log("asdfasdfsdf", this.$store.state.userLoggedDetails)
+      return this.$store.state.userLoggedDetails || null; // Assuming userName is stored in Vuex
+    }
   },
   methods: {
     async updateServiceRequest(id, data) {

@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import api from '../services/api' // Import your API service
+import api from '../services/api.js' // Import your API service
 import { setLocalItem } from '../utils/localStorage.js'
 
 export default {

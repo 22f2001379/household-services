@@ -28,10 +28,19 @@ export default {
   },
   computed: {
     requestsFromStore() {
-      return this.$store.state.customerDetails.customerRequests || [] // Assuming Vuex for state management
+      let currentCustRequest = this.$store.state.customerDetails.customerRequests || []
+
+const payload = currentCustRequest.filter(res => res.customer_id == this.userLoggedDetails.id)
+
+      // return this.$store.state.customerDetails.customerRequests || [] 
+      return payload || null
     },
     professionals() {
-      return this.$store.state.professionalDetails.professionals || [] // Assuming Vuex for state management
+      return this.$store.state.professionalDetails.professionals || [] 
+    },
+    userLoggedDetails() {
+      console.log("asdfasdfsdf", this.$store.state.userLoggedDetails)
+      return this.$store.state.userLoggedDetails || null; // Assuming userName is stored in Vuex
     }
   },
   data() {
