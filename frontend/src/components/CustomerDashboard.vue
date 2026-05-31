@@ -49,11 +49,10 @@ export default {
     },
     async getServiceRequest(){
       const {data = []} = await apis.getServiceRequest()
-      console.log("data9090900909", data)
       data && this.$store.commit("setServiceRequests", data)
     },
     handleSearch(results) {
-      console.log("Search results:", results);
+      this.$emit("search", results);
     },
     handleRequestCreated(request) {
 

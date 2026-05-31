@@ -110,7 +110,7 @@ export default {
         rating: data.rating,
         review_text: data.review_text
       })
-      console.log("reviewREs", reviewRes)
+      return reviewRes
     },
     async getServiceRequest() {
       const { data = [] } = await apis.getServiceRequest();
@@ -129,7 +129,7 @@ export default {
     },
     submitRating() {
       if (this.selectedRequest) {
-        const payload = { ...this.selectedRequest, service_status: "closed", rating: this.rating, reviewText: this.reviewText };
+        const payload = { ...this.selectedRequest, service_status: "closed", rating: this.rating, review_text: this.reviewText };
         this.updateServiceRequest(payload.id, payload);
         this.closeModal();
       }

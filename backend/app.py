@@ -1,83 +1,98 @@
-from flask import Flask
-from application.database import db
-from application.models import User, Role, UserRoles
-from application.config import LocalDevelopmentConfig
-from application.resources import *
-from flask_security import Security, SQLAlchemyUserDatastore, hash_password
+import importlib
+import os
+import sys
+from pathlib import Path
+
 from celery import Celery
-from flask_mail import Mail, Message
+from flask import Flask
 from flask_cors import CORS
+from flask_mail import Mail, Message
+from flask_security import Security, SQLAlchemyUserDatastore, hash_password
 
-# Creating the Flask app instance
-app = Flask(__name__)
+from application.config import LocalDevelopmentConfig
+from application.database import db
+from application.models import Role, ServiceRequest, User
+from application.resources import api
 
-# Update CORS to allow requests from Vue.js frontend (e.g., http://localhost:8080)
-# Specify origins for security
-CORS(app, supports_credentials=True, origins=["http://localhost:3000"])  # Allow only Vue.js frontend
+mail = Mail()
+celery = Celery("household-services")
 
-# Configuring the app
-app.config.from_object(LocalDevelopmentConfig) 
 
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your-email@gmail.com'
-app.config['MAIL_PASSWORD'] = 'your-app-password'
-app.name = 'household-services'
+def create_app(config_object=LocalDevelopmentConfig):
+    app = Flask(__name__)
+    app.config.from_object(config_object)
+    app.name = "household-services"
+    if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:///"):
+        database_path = app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "", 1)
+        if database_path != ":memory:":
+            Path(database_path).parent.mkdir(parents=True, exist_ok=True)
 
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
-mail = Mail(app)
+    db.init_app(app)
+    api.init_app(app)
+    mail.init_app(app)
+    CORS(app, supports_credentials=True, origins=app.config["CORS_ORIGINS"])
+
+    datastore = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore)
+
+    with app.app_context():
+        if "application.routes" in sys.modules:
+            importlib.reload(sys.modules["application.routes"])
+        else:
+            importlib.import_module("application.routes")
+
+        db.create_all()
+        seed_roles(datastore)
+        seed_admin(app, datastore)
+
+    celery.conf.update(app.config)
+    return app
+
+
+def seed_roles(datastore):
+    roles = {
+        "admin": "Administrator role with full access",
+        "customer": "Customer role",
+        "professional": "Service professional role",
+    }
+    for name, description in roles.items():
+        datastore.find_or_create_role(name=name, description=description)
+    db.session.commit()
+
+
+def seed_admin(app, datastore):
+    email = app.config.get("ADMIN_EMAIL")
+    password = app.config.get("ADMIN_PASSWORD")
+    if not email or not password or datastore.find_user(email=email):
+        return
+
+    admin_role = datastore.find_role("admin")
+    datastore.create_user(
+        email=email,
+        password=hash_password(password),
+        roles=[admin_role],
+        role_id=admin_role.id,
+        user_name="Admin",
+        approved=True,
+    )
+    db.session.commit()
+
 
 @celery.task
 def send_daily_reminders():
-    pending = ServiceRequest.query.filter_by(service_status='assigned').all()
-    for req in pending:
-        if req.professional_id:
-            pro = User.query.get(req.professional_id)
-            msg = Message("Pending Request Reminder", recipients=[pro.email])
-            msg.body = f"Request ID: {req.id} is assigned to you. Act on it!"
-            with app.app_context():
-                mail.send(msg)
+    pending = ServiceRequest.query.filter_by(service_status="assigned").all()
+    for service_request in pending:
+        professional = service_request.professional
+        if not professional or not professional.email:
+            continue
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(LocalDevelopmentConfig)
-    db.init_app(app)
-    api.init_app(app)
-    datastore = SQLAlchemyUserDatastore(db, User, Role)
-    app.security = Security(app, datastore)
-    app.app_context().push()
-    return app
+        msg = Message("Pending Request Reminder", recipients=[professional.email])
+        msg.body = f"Request ID: {service_request.id} is assigned to you. Act on it."
+        mail.send(msg)
 
-app = create_app()
 
-with app.app_context():
-    db.create_all()
-    roles = [
-        {"name": "admin", "description": "Administrator role with full access"},
-        {"name": "customer", "description": "customer role"},
-        {"name": "professional", "description": "Service professional role"}
-    ]
-    for role in roles:
-        app.security.datastore.find_or_create_role(
-            name=role["name"],
-            description=role["description"]
-        )
-    admin_email = "admin@me.com"
-    admin_password = "adminme"
-    if not app.security.datastore.find_user(email=admin_email):
-        admin_role = app.security.datastore.find_role("admin")
-        app.security.datastore.create_user(
-            email=admin_email,
-            password=admin_password,
-            roles=[admin_role]
-        )
-    db.session.commit()
+app = None if os.getenv("HOUSEHOLD_SKIP_AUTO_APP") == "1" else create_app()
 
-from application.routes import *
 
 if __name__ == "__main__":
     app.run(port=5001)

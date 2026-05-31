@@ -19,7 +19,7 @@
           <tbody>
             <tr v-for="(request, index) in getProfessionalRequests" :key="request.serviceId">
               <td>{{ request.service }}</td>
-              <td>{{ new Date(request.date_of_request) }}</td>
+              <td>{{ formatDate(request.date_of_request) }}</td>
               <td>
                 <span v-for="cust in customersData" :key="cust.id">
                   {{ cust.id == request.customer_id ? cust.name : '' }}
@@ -103,7 +103,6 @@
         const { data = []} = await apis.updateProfessionalServiceRequest(request.id, payload)
         // data && this.professionalRequest(request.id)
         data && this.allInitialCall()
-        console.log("sadflasjdflkasjdf", data)
         // this.$store.commit('setProfessionalRequests', acceptedRequest)
       },
       async rejectRequest(request) {
@@ -120,9 +119,11 @@
         const { data = []} = await apis.updateProfessionalServiceRequest(request.id, payload)
         // data && this.professionalRequest(request.id)
         data && this.allInitialCall()
-        console.log("sadflasjdflkasjdf", data)
         // this.getProfessionalRequests[requestId].status = 'rejected'
         // this.requests.splice(index, 1)
+      },
+      formatDate(value) {
+        return value ? new Date(value).toLocaleDateString() : '-'
       }
     }
   }

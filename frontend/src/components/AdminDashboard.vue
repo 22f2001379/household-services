@@ -151,7 +151,7 @@
                       <td>{{ customer.email }}</td>
                       <td>{{ customer.location }}</td>
                       <td style="width: 100px; ">
-                          <button style="width: 80px;" class="btn btn-sm btn-danger" @click="deleteRequest('customer', customer.id)"">Delete</button>
+                          <button style="width: 80px;" class="btn btn-sm btn-danger" @click="deleteRequest('customer', customer.id)">Delete</button>
                           <!-- <button style="width: 80px;" class="btn btn-sm btn-success mt-2" @click="approveUser('customer', index)"">Approve</button> -->
                       </td>
                     </tr>
@@ -249,12 +249,10 @@ export default {
         return this.$store.state.professionalDetails.professionals || []
       },
     customerRequests() {
-      // console.log("sdkfa", this.$store.state.customerDetails.customerRequests)
-      return this.$store.state.customerDetails.customerRequests || [] // Assuming Vuex for state management
+      return this.$store.state.customerDetails.customerRequests || []
     },
     customersData() {
-      // console.log("sdkfa", this.$store.state.customerDetails.customerRequests)
-      return this.$store.state.customerDetails.customers || [] // Assuming Vuex for state management
+      return this.$store.state.customerDetails.customers || []
     },
   },
   data() {
@@ -311,7 +309,6 @@ export default {
       }
     },
     async approveUser(type, id, data) {
-      console.log("data", data)
       if (type === 'professional') {
         const res = await apis.updateUser(id, {...data, approved: !data.approved})
         res && this.getProfessionalsDetails()
@@ -349,7 +346,6 @@ export default {
         if(Object.keys(servicesData)){
           this.fetchServices();
         }
-        console.log("update services", servicesData)
         // Update local state with fetched services
         // this.localServices = servicesData;
         // If you want to update the prop (though props are typically read-only),
@@ -379,7 +375,6 @@ export default {
       try {
         const response = await apis.deleteServices(id)
         const deleteRes = response.data.service_id
-        console.log("response", response);
         if(deleteRes){
           this.fetchServices();
         }

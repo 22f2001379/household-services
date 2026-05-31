@@ -5,7 +5,6 @@ import App from './App.vue'
 import AdminDashboard from './components/AdminDashboard.vue'
 import Login from './components/Login.vue'
 import Register from './components/Register.vue'
-import ServiceManagement from './components/ServiceManagement.vue'
 import ProfessionalDashboard from './components/ProfessionalDashboard.vue'
 import CustomerDashboard from './components/CustomerDashboard.vue'
 import { getLocalItem } from './utils/localStorage'
@@ -50,7 +49,7 @@ const store = new Vuex.Store({
       state.professionalDetails.professionalRequests = request
     },
     setRequest(state, requests){
-      state.request = requests
+      state.requests = requests
     },
     setCustomers(state, customers){
       state.customerDetails.customers = customers || []
@@ -64,10 +63,9 @@ const store = new Vuex.Store({
 const routes = [
   { path: '/login', component: Login },
   { path: '/register', component: Register },
-  { path: '/admin', component: AdminDashboard, meta: { requiresAuth: true } },
-  { path: '/service-management', component: ServiceManagement, meta: { requiresAuth: true } },
-  { path: '/professional', component: ProfessionalDashboard, meta: { requiresAuth: true } },
-  { path: '/customer', component: CustomerDashboard, meta: { requiresAuth: true } },
+  { path: '/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin' } },
+  { path: '/professional', component: ProfessionalDashboard, meta: { requiresAuth: true, role: 'professional' } },
+  { path: '/customer', component: CustomerDashboard, meta: { requiresAuth: true, role: 'customer' } },
   { path: '/', redirect: '/login' }
 ];
 
@@ -85,14 +83,15 @@ router.beforeEach((to, from, next) => {
 
   // Check if user is authenticated (has email in userDetails)
   const isAuthenticated = !!userDetails && !!userDetails.email;
+  const userRole = userDetails?.roles ? userDetails.roles[0] : null;
 
   // If the route requires authentication and user is not logged in, redirect to login
   if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
     next('/login');
   }
-  //  else if (userRole === 'customer' && to.path === '/professional') {
-  //   next('/customer');
-  // } 
+  else if (to.meta.role && to.meta.role !== userRole) {
+    next(userRole === 'admin' ? '/admin' : userRole === 'professional' ? '/professional' : '/customer');
+  }
   else {
     next(); // Proceed to the route
   }
