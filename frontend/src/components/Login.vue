@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import api from '../services/api' // Import your API service
+import api, { setAuthToken } from '../services/api'
 import { setLocalItem } from '../utils/localStorage.js'
 
 export default {
@@ -48,8 +48,7 @@ export default {
         // Make API call to your Flask login endpoint
         const response = await api.login(this.email, this.password)
         
-        // Store the authentication token
-        // localStorage.setItem('auth_token', response.data.token)
+        setAuthToken(response.data.token)
         
         // Determine user role and redirect
         const userRoles = response.data.user.roles || []
@@ -57,6 +56,7 @@ export default {
         userRoles && setLocalItem('user_details', response.data.user)
         userDetails?.email && this.$store.commit('setUserRole', userDetails.roles[0]);
         userDetails?.email && this.$store.commit('setUserName', userDetails.email); // Clear userName on logout
+        userDetails?.email && this.$store.commit('setUserLoggedDetails', userDetails);
         let redirectPath = '/'
         if (userRoles.includes('admin')) {
           redirectPath = '/admin'

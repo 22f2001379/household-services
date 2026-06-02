@@ -1,8 +1,7 @@
 from .database import db
 from flask_security import UserMixin, RoleMixin
-from werkzeug.security import check_password_hash  # To manually check the password hash
 
-# User Table
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
@@ -15,23 +14,16 @@ class User(db.Model, UserMixin):
     service = db.Column(db.String(50), nullable=True)
     location = db.Column(db.String(50), nullable=True)
     approved = db.Column(db.Boolean, default=False, nullable=False)
-    experience = db.Column(db.String(50), nullable = True)
-    # documents = db.Column(db.String(50), nullable = True)
-    
-    # Adding a relationship to Service
+    experience = db.Column(db.String(50), nullable=True)
     services = db.relationship('Service', backref='user', lazy=True)
-        # Manually define verify_password if necessary
-    # def verify_password(self, password):
-    #     # Use werkzeug's check_password_hash method to compare hashed passwords
-    #     return check_password_hash(self.password, password)
 
-# Role Table
+
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     description = db.Column(db.String)
 
-# Many-to-Many Relationship Table for User and Role
+
 class UserRoles(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -65,10 +57,8 @@ class ServiceRequest(db.Model):
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    service_request_id = db.Column(db.Integer, db.ForeignKey('service_request.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)  # e.g., 1 to 5
+    service_request_id = db.Column(db.Integer, db.ForeignKey('service_request.id'), nullable=False, unique=True)
+    rating = db.Column(db.Integer, nullable=False)
     review_text = db.Column(db.String(255))
     date_posted = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
-
-    # Relationships
     service_request = db.relationship('ServiceRequest', backref=db.backref('review', lazy=True))

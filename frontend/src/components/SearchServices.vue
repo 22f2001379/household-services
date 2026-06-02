@@ -24,7 +24,7 @@
               Service: {{ professional.service }}<br />
               Location: {{ professional.location }}<br />
               Experience: {{ professional.experience }}<br />
-              Review: {{ professional.review }} stars
+              Rating: {{ professional.rating || 'No reviews yet' }}
             </div>
             <button
               class="btn btn-sm btn-primary"
@@ -138,17 +138,15 @@ export default {
   // },
   computed: {
     filteredProfessionals() {
-      console.log("this.professional", this.professionals)
       if (!this.searchQuery) return this.professionals;
       const query = this.searchQuery.toLowerCase();
       return this.professionals.filter(
         (pro) =>
-          pro.service.toLowerCase().includes(query) ||
-          pro.location.toLowerCase().includes(query)
+          (pro.service || '').toLowerCase().includes(query) ||
+          (pro.location || '').toLowerCase().includes(query)
       );
     },
     userLoggedDetails() {
-      console.log("asdfasdfsdf", this.$store.state.userLoggedDetails)
       return this.$store.state.userLoggedDetails || null; // Assuming userName is stored in Vuex
     }
     // professionals() {
@@ -161,7 +159,6 @@ export default {
     },
     async getServiceRequest(){
       const {data = []} = await apis.getServiceRequest()
-      console.log("data9090900909", data)
       data && this.$store.commit("setServiceRequests", data)
     },
     openRequestModal(data, index) {
@@ -198,12 +195,9 @@ export default {
       };
       // this.isModalOpen = false;
 
-      console.log("request", request)
       const response = await apis.addServiceRequest(request);
       response && this.getServiceRequest()
       response && this.closeModal();
-      console.log("service request", response)
-      
     },
   },
 };

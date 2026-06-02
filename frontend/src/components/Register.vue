@@ -75,12 +75,6 @@ export default {
       services: []
     }
   },
-  // computed: {
-  //   servicesData() {
-  //     // console.log("sdkfa", this.$store.state.customerDetails.customerRequests)
-  //     return this.$store.state.customerDetails.customers || [] // Assuming Vuex for state management
-  //   },
-  // },
   mounted(){
     this.fetchServices();
   },
@@ -106,9 +100,6 @@ export default {
 
         // Handle successful registration
         this.success = true
-        
-        // Store user data if needed
-        localStorage.setItem('auth_token', response.data.token)
         
         // Redirect after short delay
         setTimeout(() => {

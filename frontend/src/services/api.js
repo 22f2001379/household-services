@@ -1,74 +1,36 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:5001',  // Flask backend URL
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5001',
   headers: {
     'Content-Type': 'application/json; charset=utf-8',
   },
-  // type: "POST",
-  // data: {},
-  // dataType: 'json',
-  // xhrFields: {
-  //    withCredentials: true
-  // },
-  // crossDomain: true,
-  // contentType: 'application/json; charset=utf-8'
-  withCredentials: true  // Enable credentials for authenticated requests
+  withCredentials: true,
 })
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token')
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers['Authentication-Token'] = token
   }
   return config
 })
+
+export function setAuthToken(token) {
+  if (token) {
+    localStorage.setItem('auth_token', token)
+  }
+}
 
 export default {
   login(email, password) {
     return api.post('/api/login', { email, password })
   },
   register(registerDetails) {
-    // console.log("register", email, password, role)
     return api.post('/api/register', registerDetails)
   },
   getUsers() {
     return api.get('/api/admin/users')
-  },
-  approveProfessional(userId) {
-    return api.put(`/api/admin/professionals/${userId}/approve`)
-  },
-  // getServices() {
-  //   return api.get('/api/admin/services')  // Updated to match admin endpoint
-  // },
-  createService(data) {
-    return api.post('/api/admin/services', data)
-  },
-  getCustomerRequests() {
-    return api.get('/api/customer/service-requests')
-  },
-  createServiceRequest(data) {
-    return api.post('/api/customer/service-requests', data)
-  },
-  closeServiceRequest(requestId) {
-    return api.put(`/api/customer/service-requests/${requestId}/close`)
-  },
-  searchServices(searchParams) {
-    return api.get('/api/services/search', {
-      params: {
-        location: searchParams.location,
-        name: searchParams.serviceName
-      }
-    })
-  },
-  getProfessionals() {
-    return api.get('/api/professionals/approved')  // Ensure this endpoint exists
-  },
-  getProfessionalDetails(professionalId) {
-    return api.get(`/api/professionals/${professionalId}`)
-  },
-  getAllServices() {
-    return api.get('/api/admin/services')  // Updated to match admin endpoint
   },
   addServices(data) {
     return api.post('/api/add/services', data)
@@ -88,40 +50,28 @@ export default {
   getProfessionals() {
     return api.get('/api/get/professionals')
   },
-  deleteUsers(userId){
+  deleteUsers(userId) {
     return api.delete(`/api/delete/user/${userId}`)
   },
-  updateUser(userId, data){
+  updateUser(userId, data) {
     return api.put(`/api/update/user/${userId}`, data)
   },
-  addServiceRequest(data){
+  addServiceRequest(data) {
     return api.post('/api/add/service-request', data)
   },
-  getServiceRequest(){
+  getServiceRequest() {
     return api.get('/api/get/service-request')
   },
-  updateServiceRequest(id, data){
+  updateServiceRequest(id, data) {
     return api.put(`/api/update/service-request/${id}`, data)
   },
-  getProfessionalServiceRequest(id){
+  getProfessionalServiceRequest(id) {
     return api.get(`/api/get/professional-service-request/${id}`)
   },
-  updateProfessionalServiceRequest(id, data){
+  updateProfessionalServiceRequest(id, data) {
     return api.put(`/api/update/professional-service-request/${id}`, data)
   },
-  addReview(data){
+  addReview(data) {
     return api.post('/api/get/reviews', data)
-  }
-}
-
-
-const dumm = { 
-  'email': 
-  { 
-    'name': 'Sagar Pradhan', 
-    'email': 'sagar.pradhan583@gmail.com', 
-    'password': 'asdkjflasdf', 'location': 
-    'askdjflsjdf', 
-    'role': 'customer' 
-  } 
+  },
 }
